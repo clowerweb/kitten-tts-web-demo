@@ -15,7 +15,7 @@ A web-based demo of the **Kitten TTS Nano** model - a lightweight 15M parameter 
 
 1. **Clone the repository:**
    ```bash
-   git clone clowerweb/kitten-tts-web-demo
+   git clone https://github.com/clowerweb/kitten-tts-web-demo
    cd kitten-tts-web-demo
    ```
 
