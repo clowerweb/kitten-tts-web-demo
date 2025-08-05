@@ -1,6 +1,6 @@
 # 😻 Kitten TTS Web Demo
 
-A web-based demo of the **Kitten TTS Nano** model - a lightweight 15M parameter text-to-speech model running entirely in your browser using ONNX Runtime and transformers.js!
+A web-based demo of the **Kitten TTS Nano** model - a lightweight 15M parameter text-to-speech model running entirely in your browser using ONNX Runtime and transformers.js! [Try the demo here](https://clowerweb.github.io/kitten-tts-web-demo/).
 
 ## ✨ Features
 
