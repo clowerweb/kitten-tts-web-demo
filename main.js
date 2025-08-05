@@ -82,7 +82,7 @@ function simplePhonemeApproximation(text) {
     return text.toLowerCase()
         .replace(/ph/g, 'f')
         .replace(/ch/g, 'tʃ')
-        .replace(/sh/g, 'ʃ')
+    .replace(/sh/g, 'ʃ')
         .replace(/th/g, 'θ')
         .replace(/ng/g, 'ŋ')
         .replace(/a/g, 'ə')
