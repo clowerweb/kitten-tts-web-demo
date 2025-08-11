@@ -22,11 +22,13 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        rm -rf package-lock.json node_modules
+        npm install
 
     - name: Build
       run: npm run build
