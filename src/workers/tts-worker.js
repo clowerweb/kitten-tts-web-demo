@@ -7,7 +7,7 @@ device = "wasm"; // webgpu still isn't sounding quite right
 self.postMessage({ status: "device", device });
 
 // Load the model
-const model_path = "/tts-model/model_quantized.onnx";
+const model_path = `${import.meta.env.BASE_URL}tts-model/model_quantized.onnx`;
 const tts = await KittenTTS.from_pretrained(model_path, {
   dtype: "q8",
   device,

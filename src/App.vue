@@ -157,7 +157,8 @@ onUnmounted(() => {
             <textarea
               v-model="text"
               placeholder="Type or paste your text here..."
-              class="w-full transition-all min-h-[180px] text-lg leading-relaxed resize-y p-3 border text-gray-300 border-gray-300 rounded-lg"
+              class="w-full transition-all min-h-[180px] text-lg leading-relaxed resize-y p-3 border border-gray-300 rounded-lg"
+              :class="voices ? '' : 'text-gray-300'"
             ></textarea>
             <button
               class="absolute top-2 right-2 h-8 w-8 rounded-full hover:bg-gray-100 flex items-center justify-center"

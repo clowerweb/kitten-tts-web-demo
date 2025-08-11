@@ -137,7 +137,7 @@ export class KittenTTS {
       const ort = await import('onnxruntime-web');
       
       // Use local files in public directory with threading enabled
-      ort.env.wasm.wasmPaths = '/onnx-runtime/';
+      ort.env.wasm.wasmPaths = `${import.meta.env.BASE_URL}onnx-runtime/`;
 
       // Try WebGPU with better configuration, fallback to WASM
       let session;
@@ -177,7 +177,7 @@ export class KittenTTS {
       }
       
       // Load voices from the local voices.json file
-      const voicesResponse = await fetch('/tts-model/voices.json');
+      const voicesResponse = await fetch(`${import.meta.env.BASE_URL}tts-model/voices.json`);
       const voicesData = await voicesResponse.json();
       
       // Transform the voices data into the format we need
@@ -202,7 +202,7 @@ export class KittenTTS {
   async loadTokenizer() {
     if (!this.tokenizer) {
       try {
-        const response = await fetch('/tts-model/tokenizer.json');
+        const response = await fetch(`${import.meta.env.BASE_URL}tts-model/tokenizer.json`);
         const tokenizerData = await response.json();
         
         // Extract the actual vocabulary from the tokenizer
@@ -282,7 +282,7 @@ export class KittenTTS {
                 // Create WASM session if we don't have one
                 if (!this.wasmSession) {
                   const ort = await import('onnxruntime-web');
-                  this.wasmSession = await ort.InferenceSession.create('/tts-model/kitten_tts_nano_v0_1.onnx', {
+                  this.wasmSession = await ort.InferenceSession.create(`${import.meta.env.BASE_URL}tts-model/kitten_tts_nano_v0_1.onnx`, {
                     executionProviders: ['wasm']
                   });
                 }
