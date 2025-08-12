@@ -156,114 +156,148 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50/50 p-4">
-    <div class="container mx-auto max-w-4xl">
-      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="p-6">
-          <div class="text-center mb-4">
-            <div class="inline-flex items-center gap-2">
-              <h1 class="text-3xl font-bold text-gray-900">😻 Kitten TTS Nano Demo</h1>
+  <div class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-800 transition-colors duration-300">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
+      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="text-3xl">😻</div>
+          <div>
+            <h1 class="text-xl font-bold bg-gradient-to-r text-blue-800 dark:text-blue-500">
+              Kitten TTS Nano
+            </h1>
+            <p class="text-sm text-muted-foreground hidden sm:block">Local text-to-speech in your browser</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <a 
+            href="https://github.com/clowerweb/kitten-tts-web-demo" 
+            target="_blank"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+          >
+            <GithubIcon class="w-4 h-4" />
+            <span class="hidden sm:inline">GitHub</span>
+            <ExternalLinkIcon class="w-3 h-3" />
+          </a>
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pt-8 pb-4 max-w-4xl">
+      <!-- Main Card -->
+      <div class="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+        <div class="p-6 pb-0 space-y-6">
+          <!-- Text Input Section -->
+          <div class="space-y-4">
+            <div class="relative">
+              <textarea
+                v-model="text"
+                placeholder="Type or paste your text here..."
+                class="w-full min-h-[180px] text-lg leading-relaxed resize-y p-4 pt-8 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-0 transition-colors"
+                :class="voices ? '' : 'text-muted-foreground'"
+              ></textarea>
+              <button
+                class="absolute top-1 right-3 h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+                @click="handleCopy"
+                :title="copied ? 'Copied!' : 'Copy text'"
+              >
+                <CheckIcon v-if="copied" class="h-4 w-4 text-green-500" />
+                <CopyIcon v-else class="h-4 w-4 text-muted-foreground" />
+              </button>
             </div>
-            <p class="text-gray-500">
-              Convert text to natural-sounding speech with Kitten TTS
-            </p>
+
+            <div class="flex justify-end">
+              <TextStatistics :text="text" />
+            </div>
           </div>
 
-          <div class="relative">
-            <textarea
-              v-model="text"
-              placeholder="Type or paste your text here..."
-              class="w-full transition-all min-h-[180px] text-lg leading-relaxed resize-y p-3 border border-gray-300 rounded-lg"
-              :class="voices ? '' : 'text-gray-300'"
-            ></textarea>
+          <!-- Controls Section -->
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Voice Selection -->
+              <div class="flex items-center">
+                <label v-if="voices" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
+                  Voice:
+                </label>
+                <VoiceSelector
+                  v-if="voices"
+                  :voices="voices"
+                  :selected-voice="selectedVoice"
+                  @voice-change="setSelectedVoice"
+                />
+                <div v-else-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+                  {{ error }}
+                </div>
+                <div v-else class="flex items-center gap-2 text-muted-foreground">
+                  <div class="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                  <span>Loading model...</span>
+                </div>
+              </div>
+
+              <!-- Speed Control -->
+              <div v-if="voices" class="flex items-center">
+                <SpeedControl
+                  :speed="speed"
+                  @speed-change="setSpeed"
+                />
+              </div>
+
+              <!-- Sample Rate -->
+              <div v-if="voices" class="flex items-center">
+                <SampleRateSelector
+                  @sample-rate-change="setSampleRate"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3">
             <button
-              class="absolute top-2 right-2 h-8 w-8 rounded-full hover:bg-gray-100 flex items-center justify-center"
-              @click="handleCopy"
-            >
-              <CheckIcon v-if="copied" class="h-4 w-4" />
-              <CopyIcon v-else class="h-4 w-4" />
-            </button>
-          </div>
-
-          <div class="flex justify-end pt-2">
-            <TextStatistics :text="text" />
-          </div>
-
-          <div class="flex gap-4 pb-4 min-h-14 items-center">
-            <label for="voice-selector" class="font-bold">Voice:</label>
-            <VoiceSelector
-              v-if="voices"
-              :voices="voices"
-              :selected-voice="selectedVoice"
-              @voice-change="setSelectedVoice"
-            />
-            <div v-else-if="error" class="text-red-400 font-semibold text-lg/6 text-center p-2">
-              {{ error }}
-            </div>
-            <div v-else class="animate-pulse text-center">
-              Loading model...
-            </div>
-
-            <div class="flex items-center gap-4 w-44" v-if="voices">
-              <SpeedControl
-                :speed="speed"
-                @speed-change="setSpeed"
-              />
-            </div>
-
-            <div class="flex items-center gap-4 ml-auto" v-if="voices">
-              <SampleRateSelector
-                @sample-rate-change="setSampleRate"
-              />
-            </div>
-          </div>
-
-          <hr class="my-4 border-gray-200" />
-
-          <div class="flex py-4 gap-4">
-            <button
-              class="w-30 transition-all py-2 px-4 rounded-lg font-medium flex items-center justify-center"
+              class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
               :class="{
-                'bg-orange-600 hover:bg-orange-700 text-white': isPlaying,
-                'bg-blue-600 hover:bg-blue-700 text-white': !isPlaying,
-                'opacity-50 cursor-not-allowed': (status === 'ready' && !isPlaying && !text) || (status !== 'ready' && chunks.length === 0)
+                'bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800 shadow-lg shadow-orange-500/25': isPlaying,
+                'bg-blue-800 shadow-lg': !isPlaying
               }"
               @click="handlePlayPause"
               :disabled="(status === 'ready' && !isPlaying && !text) || (status !== 'ready' && chunks.length === 0)"
             >
-              <PauseIcon v-if="isPlaying" class="mr-1 size-6" />
-              <PlayIcon v-else class="mr-1 size-6" />
+              <PauseIcon v-if="isPlaying" class="w-5 h-5" />
+              <PlayIcon v-else class="w-5 h-5" />
               <span v-if="isPlaying">Pause</span>
               <span v-else>{{ processed || status === 'generating' ? 'Play' : 'Generate' }}</span>
             </button>
 
             <button
-              class="ml-auto py-2 px-4 rounded-lg font-medium flex items-center justify-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
               @click="downloadAudio"
               :disabled="!result || status !== 'ready'"
-              :class="{
-                'opacity-50 cursor-not-allowed': !result || status !== 'ready'
-              }"
             >
-              <DownloadIcon class="mr-2 size-4" />
+              <DownloadIcon class="w-4 h-4" />
               Download Audio
             </button>
           </div>
 
-          <AudioChunk
-            v-if="chunks.length > 0"
-            v-for="(chunk, index) in chunks"
-            :key="index"
-            :audio="chunk.audio"
-            :active="currentChunkIndex === index"
-            :playing="isPlaying"
-            class="hidden"
-            @start="() => setCurrentChunkIndex(index)"
-            @pause="() => { if (currentChunkIndex === index) setIsPlaying(false) }"
-            @end="handleChunkEnd"
-          />
-        </div>
+          <!-- Hidden Audio Chunks -->
+          <div class="w-0 h-0 hidden">
+            <AudioChunk
+              v-if="chunks.length > 0"
+              v-for="(chunk, index) in chunks"
+              :key="index"
+              :audio="chunk.audio"
+              :active="currentChunkIndex === index"
+              :playing="isPlaying"
+              class="hidden"
+              @start="() => setCurrentChunkIndex(index)"
+              @pause="() => { if (currentChunkIndex === index) setIsPlaying(false) }"
+              @end="handleChunkEnd"
+            />
+          </div>
+          </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>

@@ -20,8 +20,8 @@ const handleSampleRateChange = () => {
 </script>
 
 <template>
-  <div class="flex items-center gap-2">
-    <label for="sample-rate" class="font-bold text-sm">Sample Rate:</label>
+  <div class="flex items-center">
+    <label for="sample-rate" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Sample Rate:</label>
     <select
       id="sample-rate"
       v-model="selectedSampleRate"

@@ -1,7 +1,7 @@
 <template>
   <button
     @click="toggleTheme"
-    class="theme-toggle-btn"
+    class="p-2 rounded-full transition-all duration-200 ease-in-out bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
     :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
   >
     <transition name="icon-fade" mode="out-in">
@@ -49,14 +49,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.theme-toggle-btn {
-  @apply p-2 rounded-full transition-all duration-200 ease-in-out;
-  @apply bg-gray-100 hover:bg-gray-200 text-gray-700;
-  @apply dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300;
-  @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
-  @apply dark:focus:ring-offset-gray-900;
-}
-
 .icon-fade-enter-active,
 .icon-fade-leave-active {
   transition: all 0.2s ease-in-out;
