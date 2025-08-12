@@ -20,7 +20,7 @@ import AudioChunk from './components/AudioChunk.vue';
 
 // State variables
 const text = ref(
-    "Kitten TTS Nano is a lightweight (24 megabytes) text-to-speech model optimized for browser usage. It can run 100% locally in your browser, powered by Transformers.js!"
+    "Hello there! Welcome to the Kitten TTS demo! Kitten TTS is a lightweight (24 megabytes) text-to-speech model. It can run 100% locally in your browser, powered by Transformers.js!"
 );
 const lastGeneration = ref(null);
 const isPlaying = ref(false);

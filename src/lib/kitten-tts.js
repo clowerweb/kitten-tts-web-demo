@@ -1,5 +1,7 @@
 /* eslint-disable no-undef */
 
+import { cleanTextForTTS, chunkText } from '../utils/text-cleaner.js';
+
 // Text splitting stream to break text into chunks
 export class TextSplitterStream {
   constructor() {
@@ -8,34 +10,9 @@ export class TextSplitterStream {
   }
 
   chunkText(text) {
-    // First, split by newlines
-    const lines = text.split('\n');
-    const chunks = [];
-
-    for (const line of lines) {
-      // Skip empty lines
-      if (line.trim() === '') continue;
-
-      // Check if the line already ends with punctuation
-      const endsWithPunctuation = /[.!?]$/.test(line.trim());
-
-      // If it doesn't end with punctuation and it's not empty, add a period
-      const processedLine = endsWithPunctuation ? line : line.trim() + '.';
-
-      // Now split the line into sentences based on punctuation followed by whitespace or end of line
-      // Using regex with positive lookbehind and lookahead to keep punctuation with the sentence
-      const sentences = processedLine.split(/(?<=[.!?])(?=\s+|$)/);
-
-      // Add each sentence to the chunks array
-      for (const sentence of sentences) {
-        const trimmedSentence = sentence.trim();
-        if (trimmedSentence) {
-          chunks.push(trimmedSentence);
-        }
-      }
-    }
-
-    return chunks;
+    // Clean the text first, then chunk it
+    const cleanedText = cleanTextForTTS(text);
+    return chunkText(cleanedText);
   }
 
   push(text) {
