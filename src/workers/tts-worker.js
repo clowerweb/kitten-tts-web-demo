@@ -1,26 +1,48 @@
 import { KittenTTS, TextSplitterStream } from "../lib/kitten-tts.js";
 import { detectWebGPU } from "../utils/utils.js";
 
-// Device detection
-let device = (await detectWebGPU()) ? "webgpu" : "wasm";
-device = "wasm"; // webgpu still isn't sounding quite right
-self.postMessage({ status: "device", device });
+let tts = null;
+let device = "wasm";
 
-// Load the model
-const model_path = `${import.meta.env.BASE_URL}tts-model/model_quantized.onnx`;
-const tts = await KittenTTS.from_pretrained(model_path, {
-  dtype: "q8",
-  device,
-}).catch((e) => {
-  console.error("Error loading model:", e);
-  self.postMessage({ status: "error", data: e.message });
-  throw e;
-});
-self.postMessage({ status: "ready", voices: tts.voices, device });
+// Initialize the model
+async function initializeModel(useWebGPU = false) {
+  try {
+    // Device detection
+    const webGPUSupported = await detectWebGPU();
+    device = (useWebGPU && webGPUSupported) ? "webgpu" : "wasm";
+    
+    self.postMessage({ status: "device", device });
+
+    // Load the model
+    const model_path = `${import.meta.env.BASE_URL}tts-model/model_quantized.onnx`;
+    tts = await KittenTTS.from_pretrained(model_path, {
+      dtype: "q8",
+      device,
+    });
+    
+    self.postMessage({ status: "ready", voices: tts.voices, device });
+  } catch (e) {
+    console.error("Error loading model:", e);
+    self.postMessage({ status: "error", data: e.message });
+  }
+}
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (e) => {
-  const { text, voice, speed, sampleRate = 24000 } = e.data;
+  const { type, useWebGPU, text, voice, speed, sampleRate = 24000 } = e.data;
+  
+  // Handle initialization
+  if (type === 'init') {
+    await initializeModel(useWebGPU);
+    return;
+  }
+  
+  // Handle TTS generation
+  if (!tts) {
+    self.postMessage({ status: "error", data: "Model not initialized" });
+    return;
+  }
+  
   const streamer = new TextSplitterStream();
 
   streamer.push(text);
@@ -138,3 +160,5 @@ function resampleLinear(input, inRate, outRate) {
   }
   return out;
 }
+
+// Note: Initialization now handled via init message from UI

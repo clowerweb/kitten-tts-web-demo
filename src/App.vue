@@ -15,6 +15,7 @@ import VoiceSelector from './components/VoiceSelector.vue';
 import SpeedControl from './components/SpeedControl.vue';
 import SampleRateSelector from './components/SampleRateSelector.vue';
 import ThemeToggle from './components/ThemeToggle.vue';
+import WebGPUToggle from './components/WebGPUToggle.vue';
 import AudioChunk from './components/AudioChunk.vue';
 
 // State variables
@@ -32,6 +33,8 @@ const worker = ref(null);
 const voices = ref(null);
 const selectedVoice = ref("expr-voice-2-m");
 const selectedSampleRate = ref(24000);
+const useWebGPU = ref(false);
+const actualDevice = ref("wasm");
 const chunks = ref([]);
 const result = ref(null);
 
@@ -55,6 +58,42 @@ const setSpeed = (newSpeed) => {
 
 const setSampleRate = (sampleRate) => {
   selectedSampleRate.value = sampleRate;
+};
+
+const handleWebGPUToggle = (enabled) => {
+  // Only restart if the value actually changed and it's different from current device
+  if (enabled !== (actualDevice.value === "webgpu")) {
+    // Restart the worker with new device preference
+    restartWorker(enabled);
+  }
+};
+
+const restartWorker = (webGPUPreference = false) => {
+  if (worker.value) {
+    worker.value.terminate();
+  }
+  
+  // Reset all audio and UI state
+  status.value = "loading";
+  voices.value = null;
+  chunks.value = [];
+  result.value = null;
+  lastGeneration.value = null; // Reset so button shows "Generate"
+  isPlaying.value = false;
+  currentChunkIndex.value = -1;
+  
+  worker.value = new Worker(new URL("./workers/tts-worker.js", import.meta.url), {
+    type: "module",
+  });
+  
+  worker.value.addEventListener("message", onMessageReceived);
+  worker.value.addEventListener("error", onErrorReceived);
+  
+  // Always send init message with device preference
+  worker.value.postMessage({ 
+    type: 'init', 
+    useWebGPU: webGPUPreference 
+  });
 };
 
 const setCurrentChunkIndex = (index) => {
@@ -110,41 +149,43 @@ const handleCopy = async () => {
   setTimeout(() => { copied.value = false }, 2000);
 }
 
+// Worker message handlers
+const onMessageReceived = ({ data }) => {
+  switch (data.status) {
+    case "device":
+      actualDevice.value = data.device;
+      // Update checkbox to reflect actual device
+      useWebGPU.value = data.device === "webgpu";
+      break;
+    case "ready":
+      status.value = "ready";
+      voices.value = data.voices;
+      actualDevice.value = data.device;
+      // Update checkbox to reflect actual device
+      useWebGPU.value = data.device === "webgpu";
+      break;
+    case "error":
+      status.value = "error";
+      error.value = data.data;
+      break;
+    case "stream":
+      chunks.value = [...chunks.value, data.chunk];
+      break;
+    case "complete":
+      status.value = "ready";
+      result.value = data.audio;
+      break;
+  }
+};
+
+const onErrorReceived = (e) => {
+  console.error("Worker error:", e);
+  error.value = e.message;
+};
+
 // Worker setup
 onMounted(() => {
-  worker.value = new Worker(new URL("./workers/tts-worker.js", import.meta.url), {
-    type: "module",
-  });
-
-  const onMessageReceived = ({ data }) => {
-    switch (data.status) {
-      case "device":
-        break;
-      case "ready":
-        status.value = "ready";
-        voices.value = data.voices;
-        break;
-      case "error":
-        status.value = "error";
-        error.value = data.data;
-        break;
-      case "stream":
-        chunks.value = [...chunks.value, data.chunk];
-        break;
-      case "complete":
-        status.value = "ready";
-        result.value = data.audio;
-        break;
-    }
-  };
-
-  const onErrorReceived = (e) => {
-    console.error("Worker error:", e);
-    error.value = e.message;
-  };
-
-  worker.value.addEventListener("message", onMessageReceived);
-  worker.value.addEventListener("error", onErrorReceived);
+  restartWorker();
 });
 
 // Cleanup
@@ -215,30 +256,22 @@ onUnmounted(() => {
           </div>
 
           <!-- Controls Section -->
-          <div class="space-y-4">
+          <div v-if="voices" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <!-- Voice Selection -->
               <div class="flex items-center">
-                <label v-if="voices" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
                   Voice:
                 </label>
                 <VoiceSelector
-                  v-if="voices"
                   :voices="voices"
                   :selected-voice="selectedVoice"
                   @voice-change="setSelectedVoice"
                 />
-                <div v-else-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
-                  {{ error }}
-                </div>
-                <div v-else class="flex items-center gap-2 text-muted-foreground">
-                  <div class="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-                  <span>Loading model...</span>
-                </div>
               </div>
 
               <!-- Speed Control -->
-              <div v-if="voices" class="flex items-center">
+              <div class="flex items-center">
                 <SpeedControl
                   :speed="speed"
                   @speed-change="setSpeed"
@@ -246,12 +279,23 @@ onUnmounted(() => {
               </div>
 
               <!-- Sample Rate -->
-              <div v-if="voices" class="flex items-center">
+              <div class="flex items-center">
                 <SampleRateSelector
                   @sample-rate-change="setSampleRate"
                 />
               </div>
             </div>
+
+            <!-- WebGPU Toggle -->
+            <WebGPUToggle v-model="useWebGPU" @update:modelValue="handleWebGPUToggle" />
+          </div>
+
+          <div v-else-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            {{ error }}
+          </div>
+          <div v-else class="flex items-center gap-2 text-muted-foreground">
+            <div class="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+            <span>Loading model...</span>
           </div>
 
           <!-- Action Buttons -->
