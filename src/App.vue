@@ -5,11 +5,16 @@ import {
   PauseIcon,
   PlayIcon,
   CopyIcon,
-  CheckIcon
+  CheckIcon,
+  GithubIcon,
+  ExternalLinkIcon,
+  Heart
 } from 'lucide-vue-next';
 import TextStatistics from './components/TextStatistics.vue';
 import VoiceSelector from './components/VoiceSelector.vue';
 import SpeedControl from './components/SpeedControl.vue';
+import SampleRateSelector from './components/SampleRateSelector.vue';
+import ThemeToggle from './components/ThemeToggle.vue';
 import AudioChunk from './components/AudioChunk.vue';
 
 // State variables
@@ -26,6 +31,7 @@ const error = ref(null);
 const worker = ref(null);
 const voices = ref(null);
 const selectedVoice = ref("expr-voice-2-m");
+const selectedSampleRate = ref(24000);
 const chunks = ref([]);
 const result = ref(null);
 
@@ -34,7 +40,8 @@ const processed = computed(() => {
   return lastGeneration.value &&
       lastGeneration.value.text === text.value &&
       lastGeneration.value.speed === speed.value &&
-      lastGeneration.value.voice === selectedVoice.value;
+      lastGeneration.value.voice === selectedVoice.value &&
+      lastGeneration.value.sampleRate === selectedSampleRate.value;
 });
 
 // Methods
@@ -44,6 +51,10 @@ const setSelectedVoice = (voice) => {
 
 const setSpeed = (newSpeed) => {
   speed.value = newSpeed;
+};
+
+const setSampleRate = (sampleRate) => {
+  selectedSampleRate.value = sampleRate;
 };
 
 const setCurrentChunkIndex = (index) => {
@@ -68,7 +79,12 @@ const handlePlayPause = () => {
     status.value = "generating";
     chunks.value = [];
     currentChunkIndex.value = 0;
-    const params = { text: text.value, voice: selectedVoice.value, speed: speed.value };
+    const params = { 
+      text: text.value, 
+      voice: selectedVoice.value, 
+      speed: speed.value,
+      sampleRate: selectedSampleRate.value
+    };
     lastGeneration.value = params;
     worker.value?.postMessage(params);
   }
@@ -192,6 +208,12 @@ onUnmounted(() => {
               <SpeedControl
                 :speed="speed"
                 @speed-change="setSpeed"
+              />
+            </div>
+
+            <div class="flex items-center gap-4 ml-auto" v-if="voices">
+              <SampleRateSelector
+                @sample-rate-change="setSampleRate"
               />
             </div>
           </div>
