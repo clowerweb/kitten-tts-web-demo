@@ -20,7 +20,7 @@ self.postMessage({ status: "ready", voices: tts.voices, device });
 
 // Listen for messages from the main thread
 self.addEventListener("message", async (e) => {
-  const { text, voice, speed } = e.data;
+  const { text, voice, speed, sampleRate = 24000 } = e.data;
   const streamer = new TextSplitterStream();
 
   streamer.push(text);
@@ -50,20 +50,34 @@ self.addEventListener("message", async (e) => {
   let audio;
   if (chunks.length > 0) {
     try {
-      const sampling_rate = chunks[0].sampling_rate;
+      const originalSamplingRate = chunks[0].sampling_rate;
       const length = chunks.reduce((sum, chunk) => sum + chunk.audio.length, 0);
-      const waveform = new Float32Array(length);
+      let waveform = new Float32Array(length);
       let offset = 0;
       for (const { audio } of chunks) {
         waveform.set(audio, offset);
         offset += audio.length;
       }
 
-      // Create a new merged RawAudio
+      // Normalize peaks & trim silence
+      normalizePeak(waveform, 0.9);
+      waveform = trimSilence(waveform, 0.002, Math.floor(originalSamplingRate * 0.02)); // 20ms padding
+
+      // Resample if needed
+      if (sampleRate !== originalSamplingRate) {
+        // Apply anti-aliasing filter for downsampling
+        if (sampleRate < originalSamplingRate) {
+          waveform = antiAliasFilter(waveform, originalSamplingRate, sampleRate);
+        }
+        
+        waveform = resampleLinear(waveform, originalSamplingRate, sampleRate);
+      }
+
+      // Create a new merged RawAudio with the target sample rate
       // @ts-expect-error - So that we don't need to import RawAudio
-      audio = new chunks[0].constructor(waveform, sampling_rate);
+      audio = new chunks[0].constructor(waveform, sampleRate);
     } catch (error) {
-      console.error("Error merging audio chunks:", error);
+      console.error("Error processing audio chunks:", error);
       self.postMessage({ status: "error", data: error.message });
       return;
     }
@@ -71,3 +85,56 @@ self.addEventListener("message", async (e) => {
 
   self.postMessage({ status: "complete", audio: audio?.toBlob() });
 });
+
+function normalizePeak(f32, target = 0.9) {
+  if (!f32?.length) return;
+  let max = 1e-9;
+  for (let i = 0; i < f32.length; i++) max = Math.max(max, Math.abs(f32[i]));
+  const g = Math.min(4, target / max);
+  if (g < 1) {
+    for (let i = 0; i < f32.length; i++) f32[i] *= g;
+  }
+}
+
+function trimSilence(f32, thresh = 0.002, minSamples = 480) {
+  let s = 0,
+      e = f32.length - 1;
+  while (s < e && Math.abs(f32[s]) < thresh) s++;
+  while (e > s && Math.abs(f32[e]) < thresh) e--;
+  s = Math.max(0, s - minSamples);
+  e = Math.min(f32.length, e + minSamples);
+  return f32.slice(s, e);
+}
+
+function antiAliasFilter(input, inRate, outRate) {
+  // Simple low-pass filter to prevent aliasing during downsampling
+  const cutoff = Math.min(outRate / 2, inRate / 2) * 0.9; // 90% of Nyquist frequency
+  const nyquist = inRate / 2;
+  const normalizedCutoff = cutoff / nyquist;
+  
+  // Simple IIR low-pass filter (Butterworth-like)
+  const a = Math.exp(-2 * Math.PI * normalizedCutoff);
+  const output = new Float32Array(input.length);
+  
+  output[0] = input[0] * (1 - a);
+  for (let i = 1; i < input.length; i++) {
+    output[i] = input[i] * (1 - a) + output[i - 1] * a;
+  }
+  
+  return output;
+}
+
+function resampleLinear(input, inRate, outRate) {
+  if (inRate === outRate) return input;
+  const ratio = outRate / inRate;
+  const outLen = Math.floor(input.length * ratio);
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const pos = i / ratio;
+    const i0 = Math.floor(pos);
+    const i1 = Math.min(input.length - 1, i0 + 1);
+    const t = pos - i0;
+    out[i] = input[i0] * (1 - t) + input[i1] * t;
+  }
+  return out;
+}
