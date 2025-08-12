@@ -26,7 +26,7 @@ const handleSampleRateChange = () => {
       id="sample-rate"
       v-model="selectedSampleRate"
       @change="handleSampleRateChange"
-      class="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      class="px-2 py-1 border border-gray-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-black"
     >
       <option v-for="rate in sampleRates" :key="rate.value" :value="rate.value">
         {{ rate.label }}
