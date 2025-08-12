@@ -19,7 +19,7 @@ import AudioChunk from './components/AudioChunk.vue';
 
 // State variables
 const text = ref(
-    "Kitten TTS Nano is a lightweight text-to-speech model optimized for browser usage. It can run 100% locally in your browser, powered by Transformers.js!"
+    "Kitten TTS Nano is a lightweight (24 megabytes) text-to-speech model optimized for browser usage. It can run 100% locally in your browser, powered by Transformers.js!"
 );
 const lastGeneration = ref(null);
 const isPlaying = ref(false);
@@ -164,7 +164,7 @@ onUnmounted(() => {
           <div class="text-3xl">😻</div>
           <div>
             <h1 class="text-xl font-bold bg-gradient-to-r text-blue-800 dark:text-blue-500">
-              Kitten TTS Nano
+              Kitten TTS Nano Demo
             </h1>
             <p class="text-sm text-muted-foreground hidden sm:block">Local text-to-speech in your browser</p>
           </div>
@@ -216,7 +216,7 @@ onUnmounted(() => {
 
           <!-- Controls Section -->
           <div class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <!-- Voice Selection -->
               <div class="flex items-center">
                 <label v-if="voices" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">

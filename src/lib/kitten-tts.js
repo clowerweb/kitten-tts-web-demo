@@ -133,18 +133,23 @@ export class KittenTTS {
 
   static async from_pretrained(model_path, options = {}) {
     try {
-      // Import ONNX Runtime Web
+      // Import ONNX Runtime Web and caching utility
       const ort = await import('onnxruntime-web');
+      const { cachedFetch } = await import('../utils/model-cache.js');
       
       // Use local files in public directory with threading enabled
       ort.env.wasm.wasmPaths = `${import.meta.env.BASE_URL}onnx-runtime/`;
+
+      // Load model using cached fetch
+      const modelResponse = await cachedFetch(model_path);
+      const modelBuffer = await modelResponse.arrayBuffer();
 
       // Try WebGPU with better configuration, fallback to WASM
       let session;
       try {
         if (options.device === 'webgpu') {
           // Try WebGPU with specific settings for better compatibility
-          session = await ort.InferenceSession.create(model_path, {
+          session = await ort.InferenceSession.create(modelBuffer, {
             executionProviders: [
               {
                 name: 'webgpu',
@@ -168,7 +173,7 @@ export class KittenTTS {
         }
       } catch (webgpuError) {
         // Fallback to WASM with explicit configuration
-        session = await ort.InferenceSession.create(model_path, {
+        session = await ort.InferenceSession.create(modelBuffer, {
           executionProviders: [{
             name: 'wasm',
             simd: true
@@ -176,8 +181,8 @@ export class KittenTTS {
         });
       }
       
-      // Load voices from the local voices.json file
-      const voicesResponse = await fetch(`${import.meta.env.BASE_URL}tts-model/voices.json`);
+      // Load voices from the local voices.json file (also cached)
+      const voicesResponse = await cachedFetch(`${import.meta.env.BASE_URL}tts-model/voices.json`);
       const voicesData = await voicesResponse.json();
       
       // Transform the voices data into the format we need
@@ -202,7 +207,8 @@ export class KittenTTS {
   async loadTokenizer() {
     if (!this.tokenizer) {
       try {
-        const response = await fetch(`${import.meta.env.BASE_URL}tts-model/tokenizer.json`);
+        const { cachedFetch } = await import('../utils/model-cache.js');
+        const response = await cachedFetch(`${import.meta.env.BASE_URL}tts-model/tokenizer.json`);
         const tokenizerData = await response.json();
         
         // Extract the actual vocabulary from the tokenizer

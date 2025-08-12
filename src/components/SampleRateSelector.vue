@@ -20,7 +20,7 @@ const handleSampleRateChange = () => {
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center md:justify-end w-full">
     <label for="sample-rate" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Sample Rate:</label>
     <select
       id="sample-rate"

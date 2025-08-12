@@ -24,6 +24,14 @@ export default defineConfig({
           }
           next();
         });
+        
+        // Add caching for model files
+        server.middlewares.use('/tts-model', (req, res, next) => {
+          // Cache model files for 7 days (604800 seconds)
+          res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+          res.setHeader('ETag', `"model-v1"`);
+          next();
+        });
       }
     }
   ],
