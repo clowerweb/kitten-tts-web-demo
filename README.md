@@ -6,10 +6,10 @@ A web-based demo of the **Kitten TTS Nano** model - a lightweight 15M parameter 
 
 - 🎤 **8 Different Voices** - Male and female expression voices
 - ⚡ **Adjustable Speed** - From 0.5x (slow) to 2.0x (fast)  
-- 🎵 **Multiple Sample Rates** - 16kHz to 48kHz for different quality levels
+- 🎵 **Multiple Sample Rates** - 8kHz to 48kHz for different quality levels
 - 🌐 **100% Browser-Based** - No server required, runs locally
 - 📱 **Real-time Generation** - Fast inference using WebAssembly
-- 🔊 **High Quality Audio** - Proper phonemization using espeak backend
+- 🚀 **WebGPU Support** - Experimental WebGPU acceleration (with WASM fallback)
 
 ## 🚀 Quick Start
 
@@ -48,15 +48,15 @@ This demo replicates the Kitten TTS pipeline in JavaScript.
 - **Voice Selection** - Choose from 8 different voice embeddings
 - **Speed Control** - Adjust speech rate (0.5x - 2.0x)
 - **Sample Rate** - Select audio quality (16kHz - 48kHz)
-- **Text Input** - Supports multiple sentences and punctuation
+- **WebGPU Toggle** - Enable experimental GPU acceleration
 
 ## 📦 Model Information
 
 This demo uses the **Kitten TTS Nano v0.1** model:
-- **Size:** ~23MB ONNX model
+- **Size:** ~24MB ONNX model (quantized)
 - **Parameters:** 15 million
 - **Quality:** High-quality speech synthesis
-- **Speed:** Real-time generation in browser
+- **Speed:** ~2-3x Real-time generation in browser
 
 **Original Model:**
 - 📁 **GitHub:** [KittenML/KittenTTS](https://github.com/KittenML/KittenTTS)
@@ -64,22 +64,44 @@ This demo uses the **Kitten TTS Nano v0.1** model:
 
 ## 🛠️ Technical Stack
 
-- **Frontend:** Vanilla JavaScript + Vite
-- **ML Runtime:** ONNX Runtime Web
+- **Frontend:** Vue 3 + Vite
+- **ML Runtime:** ONNX Runtime Web (WebGPU + WASM)
 - **Phonemization:** phonemizer.js (espeak backend)
 - **Audio Processing:** Web Audio API
-- **Model Format:** ONNX + NPZ voice embeddings
+- **Text Processing:** Custom text cleaner with smart chunking
+- **Model Format:** ONNX + JSON voice embeddings
 
 ## 📁 Project Structure
 
 ```
-├── index.html         # Main demo page
-├── main.js            # Core TTS logic
-├── model/             # Model files
-│   ├── kitten_tts_nano_v0_1.onnx
-│   └── voices.json    # Converted voice embeddings
-├── package.json       # Dependencies
-└── vite.config.js     # Vite configuration
+├── index.html              # Main HTML entry point
+├── src/
+│   ├── App.vue             # Main Vue application
+│   ├── main.js             # Application entry point
+│   ├── components/         # Vue components
+│   │   ├── AudioChunk.vue  # Audio playback component
+│   │   ├── SampleRateSelector.vue
+│   │   ├── SpeedControl.vue
+│   │   ├── TextStatistics.vue
+│   │   ├── ThemeToggle.vue
+│   │   ├── VoiceSelector.vue
+│   │   └── WebGPUToggle.vue # GPU acceleration toggle
+│   ├── lib/
+│   │   └── kitten-tts.js   # Core TTS implementation
+│   ├── utils/
+│   │   ├── model-cache.js  # Model caching utilities
+│   │   ├── text-cleaner.js # Text processing & chunking
+│   │   └── utils.js        # General utilities
+│   └── workers/
+│       └── tts-worker.js   # Web Worker for TTS
+├── public/
+│   ├── onnx-runtime/       # ONNX Runtime WASM files
+│   └── tts-model/          # Model files
+│       ├── model_quantized.onnx
+│       ├── tokenizer.json
+│       └── voices.json     # Voice embeddings
+├── package.json            # Dependencies
+└── vite.config.js          # Vite configuration
 ```
 
 ## 🤝 Contributing
@@ -116,6 +138,9 @@ The Kitten TTS model is also licensed under Apache 2.0 by [KittenML](https://git
 - Try different voices
 - Adjust sample rate settings
 - Use shorter text inputs for better quality
+
+**WebGPU not working?**
+- This is an experimental feature and is known not to work in some browser/GPU setups. We are looking for contributors to help with better WebGPU support.
 
 ---
 
