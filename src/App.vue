@@ -200,7 +200,7 @@ onUnmounted(() => {
   <div class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-800 transition-colors duration-300">
     <!-- Header -->
     <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
-      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="text-3xl">😻</div>
           <div>
@@ -212,6 +212,15 @@ onUnmounted(() => {
         </div>
         
         <div class="flex items-center gap-3">
+          <a
+              href="https://github.com/sponsors/clowerweb"
+              target="_blank"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/30 dark:hover:bg-pink-900/50 text-pink-700 dark:text-pink-300 transition-colors"
+              title="Support this project"
+          >
+            <Heart class="w-4 h-4" />
+            <span class="hidden sm:inline">Sponsor</span>
+          </a>
           <a 
             href="https://github.com/clowerweb/kitten-tts-web-demo" 
             target="_blank"
@@ -340,7 +349,18 @@ onUnmounted(() => {
               @end="handleChunkEnd"
             />
           </div>
-          </div>
+        </div>
+      </div>
+
+      <div class="max-w-4xl mx-auto px-4 py-4 mt-6 text-center">
+        <p>
+          Want more TTS demos? See my
+          <a
+            href="https://clowerweb.github.io/piper-tts-web-demo/"
+            target="_blank"
+            class="text-blue-500 hover:text-orange-700 transition-all duration-300"
+          >Piper TTS web demo</a>.
+        </p>
       </div>
     </main>
   </div>
